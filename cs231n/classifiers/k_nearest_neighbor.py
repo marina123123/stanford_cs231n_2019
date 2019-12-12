@@ -69,8 +69,7 @@ class KNearestNeighbor(object):
                 # not use a loop over dimension.                                    #
                 #####################################################################
 
-                dists[test_id, train_id] = np.linalg.norm(x[test_id, :]
-                                                          - self.x_train[train_id, :])
+                dists[test_id, train_id] = np.linalg.norm(x[test_id, :] - self.x_train[train_id, :])
 
                 #####################################################################
                 #                       END OF YOUR CODE                            #
@@ -90,20 +89,26 @@ class KNearestNeighbor(object):
         num_test = x.shape[0]
         num_train = self.x_train.shape[0]
         dists = np.zeros((num_test, num_train))
+
         for test_id in range(num_test):
             #######################################################################
             # TODO:                                                               #
             # Compute the l2 distance between the ith test point and all training #
             # points, and store the result in dists[i, :].                        #
             #######################################################################
-            
-            # just use the argument "axis"
-            dists[test_id, :] = np.linalg.norm(x[test_id, :] - self.x_train, axis=1)
+
+       		# print(self.x_train.shape)
+       		# print(x.shape)
+       		# print(np.shape(x[test_id, :]))
+       		# print(np.shape(x[test_id, :] - self.x_train))
+       		# print(np.shape(np.linalg.norm(x[test_id, :] - self.x_train, axis=1)))
+       		dists[test_id, :] = np.linalg.norm(x[test_id, :] - self.x_train, axis=1)
 
             #######################################################################
             #                         END OF YOUR CODE                            #
             #######################################################################
         return dists
+
 
     def compute_distances_no_loops(self, x):
         """
@@ -128,13 +133,9 @@ class KNearestNeighbor(object):
         #       and two broadcast sums.                                         #
         #########################################################################
 
-        # shape (num_test, 1)
-        x_norms = np.sum(x ** 2, axis=1).reshape(-1, 1)
-        # shape (num_train, )
+        x_norms = np.sum(x ** 2, axis=1)
         x_train_norms = np.sum(self.x_train ** 2, axis=1)
-        # summing arrays of shapes (num_test, 1) and (num_train, )
-        # gives exactly the necessary shape (num_test, num_train). It's broadcasting.
-        dists = (x_norms + x_train_norms - 2 * x.dot(self.x_train.T)) ** .5
+        dists = (x_norms.reshape(-1,1) + x_train_norms - 2 * np.dot(x, self.x_train.T)) ** 0.5
 
         #########################################################################
         #                         END OF YOUR CODE                              #
@@ -154,6 +155,7 @@ class KNearestNeighbor(object):
         """
         num_test = dists.shape[0]
         y_pred = np.zeros(num_test)
+
         for i in range(num_test):
             #########################################################################
             # TODO:                                                                 #
@@ -163,7 +165,7 @@ class KNearestNeighbor(object):
             # Hint: Look up the function numpy.argsort.                             #
             #########################################################################
 
-            closest_idx = np.argsort(dists[i, :])[:k]
+            closest_y = np.take(self.y_train, np.argsort(dists[i, :])[:k])
 
             #########################################################################
             # TODO:                                                                 #
@@ -173,9 +175,7 @@ class KNearestNeighbor(object):
             # label.                                                                #
             #########################################################################
 
-            neighbor_labels = self.y_train[closest_idx]
-            label_counts = np.bincount(neighbor_labels)
-            y_pred[i] = np.argmax(label_counts)
+            y_pred[i] = np.argmax(np.bincount(closest_y))
 
             #########################################################################
             #                           END OF YOUR CODE                            # 
